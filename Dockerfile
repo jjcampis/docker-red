@@ -1,29 +1,23 @@
-FROM node:19.5.0-alpine
+# Utiliza una imagen base con Node.js preinstalado
+FROM node:14
 
-# Home directory for Node-RED application source code.
-RUN mkdir -p /usr/src/node-red
+# Directorio de trabajo dentro del contenedor
+WORKDIR /app
 
-# User data directory, contains flows, config and nodes.
-RUN mkdir /data
+# Copia el archivo package.json y package-lock.json (si existe) al directorio de trabajo
+COPY package*.json ./
 
-WORKDIR /usr/src/node-red
-
-# Add node-red user so we aren't running as root.
-RUN adduser -h /usr/src/node-red -D -H node-red \
-    && chown -R node-red:node-red /data \
-    && chown -R node-red:node-red /usr/src/node-red
-
-USER node-red
-
-# package.json contains Node-RED NPM module and node dependencies
-COPY package.json /usr/src/node-red/
+# Instala las dependencias
 RUN npm install
 
-# User configuration directory volume
-VOLUME ["/data"]
+# Instala las dependencias específicas
+RUN npm install node-red-contrib-whatsapp-link@~0.1.37 node-red-dashboard@~3.3.1 puppeteer@^19.7.5
+
+# Copia todo el contenido del directorio actual al directorio de trabajo en el contenedor
+COPY . .
+
+# Expone el puerto que utiliza Node-Red (generalmente 1880)
 EXPOSE 1880
 
-# Environment variable holding file path for flows configuration
-ENV FLOWS=flows.json
-
-CMD ["npm", "start", "--", "--userDir", "/data"]
+# Comando para iniciar Node-Red cuando se ejecute el contenedor
+CMD ["npm", "start"]
